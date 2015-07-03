@@ -1,0 +1,37 @@
+PGIOSim 0.5
+Jeff Trout <jeff@jefftrout.com>
+
+This is a small utility to _SORT OF_ simulate an index scan in PG.
+What we do is open a number of files and randomly seek around reading 8KB
+at a time.  In write mode we may also write out a percentage of the blocks.
+The files can be of anything, you can use your current PG files (BEWARE THE
+-w MODE WHEN USING THEM!!!!) or anything.  The contents read are not 
+inspected by the program.
+
+It also supports a seq scan mode, which is rather useless.
+
+There are no locks, no bufmgr, it basically tests your disks raw seek & read
+ability in a pattern sort of like PG.  If you have > 1 file to read, it will
+be a closer mimic as PG will have various files opened & reading (An index
+scan fetches from the index, then fetches from the heap).
+
+If you don't want to wait for it to finish its run just hit ctrl-c
+
+The args are simple:
+
+pgiosim -b [blocks or bytes to read. supports k, m, g ie -b 40G to read 40G]  
+        -s - turn on seq scan mode)
+        -w [percentage, 0..100] - write out a percentage of the blocks read.
+	-y fsync after each write           
+	-c drop linux FS cache
+	-a [seconds] - write stall detection (for SSD) - if a write takes
+		longer the seconds print an alert. ie -a 0.5
+	-t threads - number of threads to use for work. default is 1.
+	file1 file2 .... 
+
+remember, you ideally want a data set 2x the size of ram to avoid any potential
+caching.  I also recommend looking at the output of iostat 1 while running
+this so you can see real physical iops with no caching.
+
+Thanks!
+
